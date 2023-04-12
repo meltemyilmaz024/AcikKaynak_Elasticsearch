@@ -1,0 +1,628 @@
+# 10.000 of Hits ("relation": "gte")
+GET news_headlines/_search
+
+# Total Number of Hits ("relation": "eq")
+GET news_headlines/_search
+{
+  "track_total_hits": true
+}
+
+# Search for date within a specific time range
+GET news_headlines/_search
+{
+  "query": {
+    "range": {
+      "date": {
+        "gte": "2015-06-20",
+        "lte": "2015-09-22"
+      }
+    }
+  }
+}
+
+# Aggregations : e.g. Category
+GET news_headlines/_search
+{
+  "aggs": {
+    "by_category": {
+      "terms": {
+        "field": "category",
+        "size": 100
+      }
+    }
+  }
+}
+
+# Aggregations : e.g. Popular Topics
+GET news_headlines/_search
+{
+  "query": {
+    "match": {
+      "category": "ENTERTAINMENT"
+    }
+  },
+  "aggs": {
+    "popular_in_entartainment": {
+      "significant_text": {
+        "field": "headline"
+      }
+    }
+  }
+}
+
+# Search with OR Logic 
+GET news_headlines/_search
+{
+  "query": {
+    "match": {
+      "headline": {
+        "query": "Bill Gates Steve Jobs"
+      }
+    }
+  }
+}
+
+# Search with AND Logic 
+GET news_headlines/_search
+{
+  "query": {
+    "match": {
+      "headline": {
+        "query": "Bill Gates Steve Jobs",
+        "operator": "and"
+      }
+    }
+  }
+}
+
+# Search with "minimum_should_match"  
+GET news_headlines/_search
+{
+  "query": {
+    "match": {
+      "headline": {
+        "query": "Bill Gates Steve Jobs ",
+        "minimum_should_match": 2
+      }
+    }
+  }
+}
+
+# Search a Phrase *** match
+GET news_headlines/_search
+{
+  "query": {
+    "match": {
+      "headline": {
+        "query": "Shape of you"
+      }
+    }
+  }
+}
+
+# Search a Phrase *** match_phrase
+GET news_headlines/_search
+{
+  "query": {
+    "match_phrase": {
+      "headline": {
+        "query": "Shape of you"
+      }
+    }
+  }
+}
+
+# Search a Phrase *** multi_match
+GET news_headlines/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "J.K Rowling", 
+      "fields": [
+        "headline",
+        "short_description",
+        "authors"]
+    }
+  }
+}
+
+# multi_match && Per-field boosting
+GET news_headlines/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "Michelle Obama", 
+      "fields": [
+        "headline^2",
+        "short_description",
+        "authors"]
+    }
+  }
+}
+
+# multi_match && Per-field boosting && Phrase Type
+GET news_headlines/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "party planning", 
+      "fields": [
+        "headline^2",
+        "short_description",
+        "authors"],
+      "type": "phrase"
+    }
+  }
+}
+
+# A Combination Query and Aggregation Request
+# 
+GET news_headlines/_search
+{
+  "query": {
+    "match_phrase": {
+      "headline": "Michelle Obama"
+    }
+  },
+  "aggs": {
+    "category_mentions": {
+      "terms": {
+        "field": "category",
+        "size": 100
+      }
+    }
+  }
+}
+
+# A Combination Query and Aggregation Request
+#
+# Must
+# 
+GET news_headlines/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "headline": "Michelle Obama"
+          }
+        },
+        {
+          "match": {
+            "category": "POLITICS"
+          }
+        }
+      ]
+    }
+  }
+}
+
+
+# A Combination Query and Aggregation Request
+#
+# Must & Must Not
+# 
+GET news_headlines/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "headline": "Michelle Obama"
+          }
+        }
+      ],
+      "must_not": [
+        {
+          "match": {
+            "category": "WEDDINGS"
+          }
+        }
+      ]
+    }
+  }
+}
+
+# A Combination Query and Aggregation Request
+#
+# Must & Should
+# 
+GET news_headlines/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "headline": "Michelle Obama"
+          }
+        }
+      ],
+      "should": [
+        {
+          "match_phrase": {
+            "category": "BLACK VOICES"
+          }
+        }
+      ]
+    }
+  }
+}
+
+# A Combination Query and Aggregation Request
+#
+# Bool & Filter
+# 
+GET news_headlines/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "headline": "Michelle Obama"
+          }
+        }
+      ],
+      "filter": [
+        {"range": {
+          "date": {
+            "gte": "2014-03-25",
+            "lte": "2016-03-25"
+          }
+        }}
+      ]
+    }
+  }
+}
+
+# Create a new index(ecommerce_data) with the following mapping.
+PUT ecommerce_data
+{
+  "mappings": {
+    "properties": {
+      "Country": {
+        "type": "keyword"
+      },
+      "CustomerID": {
+        "type": "long"
+      },
+      "Description": {
+        "type": "text"
+      },
+      "InvoiceDate": {
+        "type": "date",
+        "format": "M/d/yyyy H:m"
+      },
+      "InvoiceNo": {
+        "type": "keyword"
+      },
+      "Quantity": {
+        "type": "long"
+      },
+      "StockCode": {
+        "type": "keyword"
+      },
+      "UnitPrice": {
+        "type": "double"
+      }
+    }
+  }
+}
+
+# Reindex the data from the original index(source) to the one you just created(destination)
+POST _reindex
+{
+  "source": {
+    "index": "e-commerce_data"
+  },
+  "dest": {
+    "index": "ecommerce_data"
+  }
+}
+
+# Metric Aggregations - SUM | MIN | MAX | AVG
+# "size": 0 ---> No Need to Top 10 Hits *
+# "value": 2498803.974
+GET ecommerce_data/_search
+{
+  "size": 0, 
+  "aggs": {
+    "sum_unit_price": {
+      "sum": {
+        "field": "UnitPrice"
+      }
+    }
+  }
+}
+
+# Metric Aggregations - SUM | MIN | MAX | AVG
+# "size": 0 ---> No Need to Top 10 Hits *
+# avg: "value": 4.611113626088513
+# min: -11062.06
+# max: 38970
+# sum: 2498803.974
+GET ecommerce_data/_search
+{
+  "size": 0, 
+  "aggs": {
+    "sum_unit_price": {
+      "sum": {
+        "field": "UnitPrice"
+      }
+    },
+    "lowest_unit_price": {
+      "min": {
+        "field": "UnitPrice"
+      }
+    },
+    "highest_unit_price": {
+      "max": {
+        "field": "UnitPrice"
+      }
+    },
+    "avg_unit_price": {
+      "avg": {
+        "field": "UnitPrice"
+      }
+    }
+  }
+}
+
+
+
+# Metric Aggregations - SUM | MIN | MAX | AVG
+# All in One with "Stats"
+GET ecommerce_data/_search
+{
+  "size": 0, 
+  "aggs": {
+    "all_stats_unit_price": {
+      "stats": {
+        "field": "UnitPrice"
+      }
+    }
+  }
+}
+
+
+# Metric Aggregations - SUM | MIN | MAX | AVG
+# Distinct Count for Given Field (CARDINALITY) 
+GET ecommerce_data/_search
+{
+  "size": 0, 
+  "aggs": {
+    "number_unique_customers": {
+      "cardinality": {
+        "field": "CustomerID"
+      }
+    }
+  }
+}
+
+# Metric Aggregations - SUM | MIN | MAX | AVG
+# The Avreage of unit price of items sold in Germany
+GET ecommerce_data/_search
+{
+  "size": 0,
+  "query": {
+    "match": {
+      "Country": "Germany"
+    }
+  }, 
+  "aggs": {
+    "germany_average_unit_price": {
+      "avg": {
+        "field": "UnitPrice"
+      }
+    }
+  }
+}
+
+
+# Buckets Aggregations : Date Histograms Aggs, Histogram Aggs, Range Aggs, Terms Aggs
+#
+# Date Histogram Aggs: Fixed OR Calendar _interval
+# Fixed Interval ***
+GET ecommerce_data/_search
+{
+  "size": 0,
+  "aggs": {
+    "transactions_by_8_hrs":{
+      "date_histogram": {
+        "field": "InvoiceDate",
+        "fixed_interval": "8h"
+      }
+    }
+  }
+}
+
+# Date Histogram Aggs: Fixed OR Calendar _interval
+# Calendar Interval
+GET ecommerce_data/_search
+{
+  "size": 0,
+  "aggs": {
+    "transactions_by_month":{
+      "date_histogram": {
+        "field": "InvoiceDate",
+        "calendar_interval": "1M"
+      }
+    }
+  }
+}
+
+# Date Format       : "key_as_string": "1/1/2011 0:0",
+# Timestamp Format  : "key": 1293840000000,
+
+# Date Histogram Aggs: Fixed OR Calendar _interval
+# Calendar Interval with DESC Order
+GET ecommerce_data/_search
+{
+  "size": 0,
+  "aggs": {
+    "transactions_by_month":{
+      "date_histogram": {
+        "field": "InvoiceDate",
+        "calendar_interval": "1M",
+        "order": {
+          "_key": "desc"
+        }
+      }
+    }
+  }
+}
+
+# Histogram
+GET ecommerce_data/_search
+{
+  "size": 0,
+  "aggs": {
+    "transactions_per_price_interval":{
+      "histogram": {
+        "field": "UnitPrice",
+        "interval": 10,
+        "order": {
+          "_key": "asc"
+        }
+      }
+    }
+  }
+}
+
+# Range Aggregation
+GET ecommerce_data/_search
+{
+  "size": 0,
+  "aggs": {
+    "transactions_per_custom_price_ranges": {
+      "range": {
+        "field": "UnitPrice",
+        "ranges": [
+          {
+            "to": 50
+          },
+          {
+            "from": 50,
+            "to": 200
+          },
+          {
+            "from": 200
+          }
+        ]
+      }
+    }
+  }
+}
+
+# Terms Aggregation
+# By default, the terms aggregation sorts buckets based on the "doc_count" values in descending order.
+GET ecommerce_data/_search
+{
+  "size": 0,
+  "aggs": {
+    "top_5_customers": {
+      "terms": {
+        "field": "CustomerID",
+        "size": 5
+      }
+    }
+  }
+}
+
+# Terms Aggregation
+# To reverse this order, you can add an order parameter to the aggregation.
+GET ecommerce_data/_search
+{
+  "aggs": {
+    "5_customers_with_lowest_number_of_transactions": {
+      "terms": {
+        "field": "CustomerID",
+        "size": 5,
+        "order": {
+          "_count": "asc"
+        }
+      }
+    }
+  }
+}
+
+
+## Combined Aggregations
+# Metric Aggregations ** 
+# Calculate the daily revenue
+GET ecommerce_data/_search
+{
+  "size": 0,
+  "aggs": {
+    "transactions_per_day": {
+      "date_histogram": {
+        "field": "InvoiceDate",
+        "calendar_interval": "day"
+      },
+      "aggs": {
+        "daily_revenue": {
+          "sum": {
+            "script": {
+              "source": "doc['UnitPrice'].value * doc['Quantity'].value"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Metric Aggregations **
+# Calculating multiple metrics per bucket
+GET ecommerce_data/_search
+{
+  "size": 0,
+  "aggs": {
+    "transactions_per_day": {
+      "date_histogram": {
+        "field": "InvoiceDate",
+        "calendar_interval": "day"
+      },
+      "aggs": {
+        "daily_revenue": {
+          "sum": {
+            "script": {
+              "source": "doc['UnitPrice'].value * doc['Quantity'].value"
+            }
+          }
+        },
+        "number_of_unique_customers_per_day": {
+          "cardinality": {
+            "field": "CustomerID"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+PUT /turkish_samples
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "remove_turkish_stop_words" :{
+          "type": "standard",
+          "stopwords": "_turkish_"
+        }
+      }
+    }
+  }
+}
+
+GET turkish_samples/_analyze
+{
+  "text": "Eğer bir gün benim sözlerim bilimle ters düşerse bilimi seçin."
+}
+
+
+
