@@ -1,0 +1,73 @@
+# Check the disk space on each node
+GET _nodes/stats/fs
+
+# Check if the cluster is rebalancing
+GET _cluster/health/
+
+# Check the cluster settings
+GET _cluster/settings
+
+# Filter the disk watermarks easily:
+GET /_cluster/settings?include_defaults&flat_settings
+
+GET _cat/shards?v=true
+
+GET _cat/indices?v=true
+
+GET _cat/nodes?v
+
+GET _cat/nodes/stats?
+
+GET _cat/allocation?v
+
+GET _cluster/allocation/explain?pretty
+
+GET _cat/indices?v
+
+GET _cat/indices/general_logs*?v
+
+### 1) Stop allocation
+PUT /_cluster/settings
+{
+  "persistent": {
+    "cluster.routing.allocation.enable": "all"
+  }
+}
+
+### 2) Increase node left delayed timeout
+PUT /_all/_settings
+{
+  "settings": {
+    "index.unassigned.node_left.delayed_timeout": "0m"
+  }
+} 
+
+### 3) Disable rebalancing between nodes if needed 
+PUT /_cluster/settings?pretty
+{
+"persistent" : {
+  "cluster.routing.rebalance.enable" : "all"
+  }
+}
+
+## ALIAS ##
+
+## List indicies 
+GET _cat/indices/general*?v&h=health,index,pri,rep&s=index
+
+
+## List aliases
+GET _cat/aliases/*?v=true
+
+
+POST _aliases
+{
+  "actions": [
+    {
+      "add": {
+        "index": "general_logs",
+        "alias": "general_logs_docs"
+      }
+    }
+  ]
+}
